@@ -9,7 +9,14 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_LoadedAsync">
 
-    <Grid>
-        <Image x:Name="image" HorizontalAlignment="Left"  Margin="0,0,0,0" VerticalAlignment="Top" Stretch="None"/>
+    <Grid KeyUp="Grid_KeyUp">
+        <Button VerticalAlignment="Top" Content="Open folder" Click="Button_ClickAsync" Background="Transparent"></Button>
+        <ProgressRing x:Name="LoadingIndicator" Width="64" Height="64"/>
+        <Image x:Name="image" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="None"/>
+        <RelativePanel VerticalAlignment="Top" Margin="0,958,0,0" >
+            <Button x:Name="buttonNext" Content="&gt;&gt;" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" Background="Transparent" Height="32" Width="78" HorizontalAlignment="Center" Margin="130,0,0,0" Click="buttonNext_ClickAsync"/>
+            <Button x:Name="buttonPrev" Content="&lt;&lt;" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" Background="Transparent" Height="32" Width="78" Margin="0,0,130,0" Click="buttonPrev_ClickAsync"/>
+        </RelativePanel>
+
     </Grid>
 </Page>
