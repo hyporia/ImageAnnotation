@@ -3,20 +3,26 @@
     x:Name="Page"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:ImageAnnotation"
+    xmlns:local="using:ImageAnnotation" 
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_LoadedAsync">
 
-    <Grid KeyUp="Grid_KeyUp">
-        <Button VerticalAlignment="Top" Content="Open folder" Click="Button_ClickAsync" Background="Transparent"></Button>
+
+    <Grid KeyUp="Grid_KeyUpAsync">
+        <Button x:Name="buttonPickFolder" VerticalAlignment="Top" Content="Open folder" Click="ButtonPickFolder_ClickAsync" Background="Transparent"></Button>
         <ProgressRing x:Name="LoadingIndicator" Width="64" Height="64"/>
         <Image x:Name="image" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="None"/>
         <RelativePanel VerticalAlignment="Top" Margin="0,958,0,0" >
             <Button x:Name="buttonNext" Content="&gt;&gt;" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" Background="Transparent" Height="32" Width="78" HorizontalAlignment="Center" Margin="130,0,0,0" Click="buttonNext_ClickAsync"/>
             <Button x:Name="buttonPrev" Content="&lt;&lt;" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" Background="Transparent" Height="32" Width="78" Margin="0,0,130,0" Click="buttonPrev_ClickAsync"/>
         </RelativePanel>
+        <GridView HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,45,0,0">
+            <CheckBox x:Name="checkBox_IsDirty" Content="IsDirty" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="checkBox_IsDirty_ClickAsync" />
+            <CheckBox x:Name="checkBox_HasLabel" Content="HasLabel" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="checkBox_HasLabel_ClickAsync"/>
+            <CheckBox x:Name="checkBox_IsDamaged" Content="IsDamaged" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="checkBox_IsDamaged_ClickAsync"/>
+        </GridView>
 
     </Grid>
 </Page>

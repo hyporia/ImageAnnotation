@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageAnnotation.Models;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -29,7 +30,9 @@ namespace ImageAnnotation
     public sealed partial class MainPage : Page
     {
         private IReadOnlyList<StorageFile> Images;
-        private int CurrentImageIndex = -1;
+        private List<MyImage> MyImages = new List<MyImage>();
+        private MyImage CurrentMyImage;
+        private int CurrentImageIndex = 0;
         public MainPage()
         {
             this.InitializeComponent();
@@ -58,12 +61,11 @@ namespace ImageAnnotation
 			}
         }
 
-        private async Task SetImage(int index)
+        private async Task SetImage()
 		{
-            if (Images != null && index > -1 && index < Images.Count)
+            if (Images != null && CurrentImageIndex > -1 && CurrentImageIndex < Images.Count)
 			{
-                this.image.Source = await GetImageFromFileAsync(Images[index]);
-                CurrentImageIndex = index;
+                this.image.Source = await GetImageFromFileAsync(Images[CurrentImageIndex]);
             }
         }
 
@@ -82,23 +84,57 @@ namespace ImageAnnotation
 
 		}
 
-		private async void Button_ClickAsync(object sender, RoutedEventArgs e)
+        private async Task SetCurrentCheckboxesStates()
+		{
+            if (CurrentMyImage == null) return;
+            checkBox_IsDamaged.IsChecked = Convert.ToBoolean(CurrentMyImage.IsDamaged);
+            checkBox_HasLabel.IsChecked = Convert.ToBoolean(CurrentMyImage.HasLabel);
+            checkBox_IsDirty.IsChecked = Convert.ToBoolean(CurrentMyImage.IsDirty);
+        }
+
+        private async Task SetCurrentMyImage()
+		{
+            if (Images == null || CurrentImageIndex < 0 || CurrentImageIndex >= Images.Count) return;
+            if (CurrentImageIndex >= MyImages.Count)
+			{
+                CurrentMyImage = new MyImage { Name = Images[CurrentImageIndex].Name };
+                MyImages.Add(CurrentMyImage);
+			}
+			else
+			{
+                CurrentMyImage = MyImages[CurrentImageIndex];  
+			}
+            SetCurrentCheckboxesStates();
+        }
+
+		private async void ButtonPickFolder_ClickAsync(object sender, RoutedEventArgs e)
 		{
             await GetImages();
-            await SetImage(0);
+            await SetImage();
+            await SetCurrentMyImage();
         }
 
 		private async void buttonNext_ClickAsync(object sender, RoutedEventArgs e)
 		{
-            await SetImage(++CurrentImageIndex);
+            if (CurrentImageIndex + 1 < Images.Count)
+            {
+                CurrentImageIndex++;
+                await SetImage();
+                await SetCurrentMyImage();
+            }
 		}
 
 		private async void buttonPrev_ClickAsync(object sender, RoutedEventArgs e)
 		{
-            await SetImage(--CurrentImageIndex);
+            if (CurrentImageIndex - 1 >= 0)
+            {
+                CurrentImageIndex--;
+                await SetImage();
+                await SetCurrentMyImage();
+            }
         }
 
-		private async void Grid_KeyUp(object sender, KeyRoutedEventArgs e)
+		private async void Grid_KeyUpAsync(object sender, KeyRoutedEventArgs e)
 		{
             switch (e.Key)
             {
@@ -110,6 +146,24 @@ namespace ImageAnnotation
                     break;
                 default: break;
             }
+        }
+
+		private async void checkBox_IsDirty_ClickAsync(object sender, RoutedEventArgs e)
+		{
+            if (CurrentMyImage == null) return;
+            CurrentMyImage.IsDirty = Convert.ToInt16(checkBox_IsDirty.IsChecked);
+		}
+
+		private async void checkBox_HasLabel_ClickAsync(object sender, RoutedEventArgs e)
+		{
+            if (CurrentMyImage == null) return;
+            CurrentMyImage.HasLabel = Convert.ToInt16(checkBox_HasLabel.IsChecked);
+        }
+
+		private async void checkBox_IsDamaged_ClickAsync(object sender, RoutedEventArgs e)
+		{
+            if (CurrentMyImage == null) return;
+            CurrentMyImage.IsDamaged = Convert.ToInt16(checkBox_IsDamaged.IsChecked);
         }
 	}
 }
