@@ -19,6 +19,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Windows.Storage;
+using Newtonsoft.Json;
 
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x419
 
@@ -33,6 +35,11 @@ namespace ImageAnnotation
         private List<MyImage> MyImages = new List<MyImage>();
         private MyImage CurrentMyImage;
         private int CurrentImageIndex = 0;
+        private string CurrentFolderPath;
+        private string CurrentFolderName;
+        private StorageFolder currentImageFolder;
+        private ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+        private StorageFolder localFolder = ApplicationData.Current.LocalFolder;
         public MainPage()
         {
             this.InitializeComponent();
@@ -49,11 +56,15 @@ namespace ImageAnnotation
             var folder = await picker.PickSingleFolderAsync();
             if (folder != default(StorageFolder))
             {
+                
 				try
                 {
                     LoadingIndicator.IsActive = true;
                     Images = await folder.GetFilesAsync();
-				}
+                    currentImageFolder = folder;
+                    CurrentFolderPath = folder.Path;
+                    CurrentFolderName = folder.Name;
+                }
 				finally
                 {
                     LoadingIndicator.IsActive = false;
@@ -104,12 +115,13 @@ namespace ImageAnnotation
 			{
                 CurrentMyImage = MyImages[CurrentImageIndex];  
 			}
-            SetCurrentCheckboxesStates();
+            await SetCurrentCheckboxesStates();
         }
 
 		private async void ButtonPickFolder_ClickAsync(object sender, RoutedEventArgs e)
 		{
             await GetImages();
+            await RestoreLastState();
             await SetImage();
             await SetCurrentMyImage();
         }
@@ -144,26 +156,120 @@ namespace ImageAnnotation
                 case Windows.System.VirtualKey.Left:
                     buttonPrev_ClickAsync(null, null);
                     break;
+                case Windows.System.VirtualKey.Number1:
+                    ReverseCheckBox(checkBox_IsDirty);
+                    CheckBox_IsDirty_Click(null, null);
+                    break;
+                case Windows.System.VirtualKey.Number2:
+                    ReverseCheckBox(checkBox_HasLabel);
+                    CheckBox_HasLabel_Click(null, null);
+                    break;
+                case Windows.System.VirtualKey.Number3:
+                    ReverseCheckBox(checkBox_IsDamaged);
+                    CheckBox_IsDamaged_Click(null, null);
+                    break;
+                case Windows.System.VirtualKey.S:
+                    await SaveCurrentState();
+                    break;
                 default: break;
             }
         }
 
-		private async void checkBox_IsDirty_ClickAsync(object sender, RoutedEventArgs e)
+		private void CheckBox_IsDirty_Click(object sender, RoutedEventArgs e)
 		{
             if (CurrentMyImage == null) return;
             CurrentMyImage.IsDirty = Convert.ToInt16(checkBox_IsDirty.IsChecked);
 		}
 
-		private async void checkBox_HasLabel_ClickAsync(object sender, RoutedEventArgs e)
+		private void CheckBox_HasLabel_Click(object sender, RoutedEventArgs e)
 		{
             if (CurrentMyImage == null) return;
             CurrentMyImage.HasLabel = Convert.ToInt16(checkBox_HasLabel.IsChecked);
         }
 
-		private async void checkBox_IsDamaged_ClickAsync(object sender, RoutedEventArgs e)
+		private void CheckBox_IsDamaged_Click(object sender, RoutedEventArgs e)
 		{
             if (CurrentMyImage == null) return;
             CurrentMyImage.IsDamaged = Convert.ToInt16(checkBox_IsDamaged.IsChecked);
         }
-	}
+
+        private void ReverseCheckBox(CheckBox checkBox)
+		{
+            checkBox.IsChecked = !checkBox.IsChecked;
+		}
+
+        private async Task SaveCurrentState()
+		{
+            
+            if (MyImages != null && MyImages.Any())
+			{
+				try
+                {
+                    textBox_State.Text = "Saving state...";
+                    textBox_State.Visibility = Visibility.Visible;
+
+                    var fileName = $"{CurrentFolderName}_{DateTime.Now:ddMMyy_HHmmss}.json";
+                    var jsonString = JsonConvert.SerializeObject(MyImages);
+
+                    var myImagesJsonFileLocal = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+                    await FileIO.WriteTextAsync(myImagesJsonFileLocal, jsonString);
+
+                    var annotationFolder = await currentImageFolder.CreateFolderAsync("annotation", CreationCollisionOption.OpenIfExists);
+                    var myImagesJsonFile = await annotationFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+                    await FileIO.WriteTextAsync(myImagesJsonFile, jsonString);
+
+
+                    localSettings.Values["LastFileName"] = fileName;
+                    localSettings.Values["LastImageIndex"] = CurrentImageIndex;
+                    localSettings.Values["LastFolderPath"] = CurrentFolderPath;
+
+                    textBox_State.Visibility = Visibility.Collapsed;
+                }
+				catch(Exception ex)
+                {
+                    var myImagesJsonFile = await localFolder.CreateFileAsync($"error_{DateTime.Now:ddMMyy_HHmmss}.txt",
+                                CreationCollisionOption.ReplaceExisting);
+                    await FileIO.WriteTextAsync(myImagesJsonFile, ex.Message);
+                    textBox_State.Text = "Error";
+                }
+            }
+
+        }
+
+        private async Task RestoreLastState()
+        {
+            try
+            {
+                textBox_State.Text = "Restoring state...";
+                textBox_State.Visibility = Visibility.Visible;
+
+                var hasAllVariables = localSettings.Values.ContainsKey("LastFolderPath") && localSettings.Values.ContainsKey("LastImageIndex")
+                    && localSettings.Values.ContainsKey("LastFileName");
+
+                if (hasAllVariables)
+				{
+                    var lastFolderPath  = (string)localSettings.Values["LastFolderPath"];
+                    if (CurrentFolderPath == lastFolderPath)
+                    {
+                        var fileName = (string)localSettings.Values["LastFileName"];
+                        CurrentImageIndex = (int)localSettings.Values["LastImageIndex"];
+
+                        var myImagesJsonFile = await localFolder.GetFileAsync(fileName);
+                        var jsonString = await FileIO.ReadTextAsync(myImagesJsonFile);
+
+                        MyImages = JsonConvert.DeserializeObject<List<MyImage>>(jsonString);
+                    }
+
+                }
+                textBox_State.Visibility = Visibility.Collapsed;
+            }
+            catch (Exception ex)
+            {
+                var myImagesJsonFile = await localFolder.CreateFileAsync($"error_{DateTime.Now:ddMMYY_HHmmss}.txt",
+                            CreationCollisionOption.ReplaceExisting);
+                await FileIO.WriteTextAsync(myImagesJsonFile, ex.Message);
+                textBox_State.Text = "Error";
+            }
+        }
+    }
 }

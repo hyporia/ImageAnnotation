@@ -19,10 +19,11 @@
             <Button x:Name="buttonPrev" Content="&lt;&lt;" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" Background="Transparent" Height="32" Width="78" Margin="0,0,130,0" Click="buttonPrev_ClickAsync"/>
         </RelativePanel>
         <GridView HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,45,0,0">
-            <CheckBox x:Name="checkBox_IsDirty" Content="IsDirty" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="checkBox_IsDirty_ClickAsync" />
-            <CheckBox x:Name="checkBox_HasLabel" Content="HasLabel" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="checkBox_HasLabel_ClickAsync"/>
-            <CheckBox x:Name="checkBox_IsDamaged" Content="IsDamaged" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="checkBox_IsDamaged_ClickAsync"/>
+            <CheckBox x:Name="checkBox_IsDirty" Content="IsDirty" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="CheckBox_IsDirty_Click" />
+            <CheckBox x:Name="checkBox_HasLabel" Content="HasLabel" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="CheckBox_HasLabel_Click"/>
+            <CheckBox x:Name="checkBox_IsDamaged" Content="IsDamaged" VerticalAlignment="Top" AllowFocusOnInteraction="False" Click="CheckBox_IsDamaged_Click"/>
         </GridView>
+        <TextBox x:Name="textBox_State" HorizontalAlignment="Left" Margin="1375,0,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Width="125" Visibility="Collapsed"/>
 
     </Grid>
 </Page>
